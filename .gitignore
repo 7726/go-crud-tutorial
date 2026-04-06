@@ -1,0 +1,14 @@
+# Go 빌드 결과물 (실행 파일)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# IDE 및 OS 설정 파일
+.vscode/
+.idea/
+.DS_Store
+
+# 환경 변수 및 시크릿 (DB 비밀번호 유출 방지 - ★매우 중요)
+.env
