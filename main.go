@@ -113,21 +113,52 @@ func main() {
 		c.JSON(http.StatusOK, user)
 	})
 
-	// 4. Update (유저 수정 - PUT)
-	router.PUT("/users/:id", func(c *gin.Context) {
+	// 4. Update (유저 부분 수정 - PATCH)
+	router.PATCH("/users/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		var user User
-		if err := c.ShouldBindJSON(&user); err != nil {
+
+		// 1) 부분 수정을 위해 값이 들어왔는지 확인할 임시 구조체 (포인터 사용)
+		type UpdateReq struct {
+			Name  *string `json:"name"`
+			Email *string `json:"email"`
+		}
+		var req UpdateReq
+		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 요청입니다."})
 			return
 		}
 
-		_, err := db.Exec("UPDATE users SET name = ?, email = ? WHERE id = ?", user.Name, user.Email, id)
+		// 2) 기존 데이터 조회 (먼저 DB에서 타겟 유저를 가져옵니다)
+		var user User
+		err := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				c.JSON(http.StatusNotFound, gin.H{"error": "수정할 유저를 찾을 수 없습니다."})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "DB 조회 에러"})
+			}
+			return
+		}
+
+		// 3) 값이 들어온 필드만 덮어쓰기 (Spring의 Dirty Checking 또는 부분 병합과 유사)
+		if req.Name != nil {
+			user.Name = *req.Name
+		}
+		if req.Email != nil {
+			user.Email = *req.Email
+		}
+
+		// 4) DB에 최종 업데이트 반영
+		_, err = db.Exec("UPDATE users SET name = ?, email = ? WHERE id = ?", user.Name, user.Email, id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "수정 실패"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "수정 완료"})
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "부분 수정 완료",
+			"updated_user": user,
+		})
 	})
 
 	// 5. Delete (유저 삭제 - DELETE)
