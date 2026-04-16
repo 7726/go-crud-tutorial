@@ -12,7 +12,6 @@
 - **RESTful API**: `GET`, `POST`, `PATCH`(부분 수정), `DELETE` 메서드를 활용한 표준 규격 준수.
 - **Security & Safety**: `?` 파라미터 바인딩을 통한 SQL Injection 방지 및 `*`(포인터)를 활용한 Null/Empty-string 안전성 확보.
 - **Configuration**: `.env` 파일을 통한 민감 정보 분리.
-- *Note*: 현재는 빠른 프로토타이핑과 동작 증명을 위해 `main.go` 단일 파일로 구성되어 있으나, 실무 환경 투입 시 `handler`와 `repository` 패키지로 분리하여 의존성을 낮추는 리팩토링을 염두에 두고 있습니다.
 
 ## 🚀 Quick Start
 
